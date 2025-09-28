@@ -3,16 +3,7 @@ const {Schema, model, ObjectId} = mongoose;
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
-    
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB successfully");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-    process.exit(1);
-  });
+
 const User = new Schema({
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
@@ -31,7 +22,7 @@ const Admin = new Schema({
 });
 
 const Course = new Schema({
-    title: {type: String, required: true},
+    title: {type: String, required: true},  
     description: {type: String, required: true},
     price: {type: Number, required: true},
     imageUrl: {type: String},
