@@ -2,16 +2,16 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { userModel } from '../db.js';
 import bcrypt from 'bcrypt';
-import { verifyJwtUserMiddleware } from '../middleware/userMiddleware.js';
+import { verifyJwtUserMiddleware, verifyUserCredential } from '../middleware/userMiddleware.js';
 import { jwtUserSecret } from '../config.js';
 
 const userRouter = express.Router()
 const saltRounds = 10;
 
 
-userRouter.post('/signup', async (req, res) => {
+userRouter.post('/signup',verifyUserCredential, async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, firstName, lastName } = req.body;
     const user = await userModel.findOne({email,});
 
     if (user) {
@@ -23,7 +23,8 @@ userRouter.post('/signup', async (req, res) => {
     const payload = {
       email,
       password: await bcrypt.hash(password, saltRounds),
-      name,
+      firstName,
+      lastName,
     }
 
     await userModel.create(payload);
@@ -37,7 +38,7 @@ userRouter.post('/signup', async (req, res) => {
   }
 });
 
-userRouter.post('/signin', async (req, res) => {
+userRouter.post('/signin', verifyUserCredential, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await userModel.findOne({

@@ -12,7 +12,7 @@ app.use(cors());
 dotenv.config();
 
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 app.use('/api/user', userRouter);
 app.use('/api/course', courseRouter);
