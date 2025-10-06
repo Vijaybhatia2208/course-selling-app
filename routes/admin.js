@@ -4,13 +4,27 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { jwtAdminSecret } from '../config.js';
 import { verifyJwtAdminMiddleware } from '../middleware/adminMiddleware.js';
+import * as z from "zod";
+import { courseModel } from '../db.js';
 
 const saltRounds = 10;
 const adminRouter = express.Router()
 
+const adminSchema = z.object({
+  email : z.email(),
+  password: z.string().min(4),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1)  
+});
+
 adminRouter.post('/signup', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, firstName, lastName } = req.body;
+
+    adminSchema.parse({
+      email, password, firstName, lastName
+    });
+
     const admin = await adminModel.findOne({email,});
 
     if (admin) {
@@ -22,7 +36,8 @@ adminRouter.post('/signup', async (req, res) => {
     const payload = {
       email,
       password: await bcrypt.hash(password, saltRounds),
-      name,
+      firstName,
+      lastName
     }
 
     await adminModel.create(payload);
@@ -53,10 +68,11 @@ adminRouter.post('/signin', async (req, res) => {
       res.json({
         token: jwt.sign(
           {
-            id: user._id,
+            _id: admin._id,
           },
           jwtAdminSecret
         ),
+        details: admin
       });
     } else {
       res.status(403).json({
@@ -71,31 +87,66 @@ adminRouter.post('/signin', async (req, res) => {
 });
 
 
-adminRouter.post('/course', verifyJwtAdminMiddleware, (req, res) => {
-  // Course creation logic here
-  res.send('Course created');
+adminRouter.post('/course', verifyJwtAdminMiddleware, async (req, res) => {
+  try {
+    const adminId = req.headers.adminId;
+    const { title, description, price, imageUrl } = req.body;
+    CourseSchema.parse({
+      title, description, price, imageUrl 
+    });
+
+    console.log(adminId);
+
+    const dbResponse = await courseModel.create({
+      title, 
+      description, 
+      price, 
+      imageUrl,
+      creatorId: adminId
+    })
+    console.log(dbResponse);
+    res.status(200).json(dbResponse);
+  } catch(err) {
+    res.status(400).json({error: String(err)});
+  }
+
 });
 
-adminRouter.put('/course', verifyJwtAdminMiddleware, (req, res) => {
+const CourseSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  price: z.number().min(0),
+  imageUrl: z.string().url()
+});
+
+adminRouter.put('/course/:_id', verifyJwtAdminMiddleware, async (req, res) => {
   // Course update logic here
-  res.send('Course updated');
+
+  try {
+    const {_id} = req.params;
+    const dbResponse  = await courseModel.findOneAndUpdate({_id}, req.body);
+    if(!response) {
+      return res.status(404).json({error: "Course not found!"});
+    }
+    res.status(200).send(dbResponse);
+  } catch(err) {
+    res.status(400).json({error: JSON.stringify(err)});
+  }
 });
 
 
-adminRouter.get('/course/bulk', verifyJwtAdminMiddleware, (req, res) => {
-  // Bulk course retrieval logic here
-  res.send('Bulk course data');
+adminRouter.get('/course/bulk', verifyJwtAdminMiddleware, async (req, res) => {
+  try {
+    const adminId = req.headers.adminId;
+    const dbResponse  = await courseModel.findMany({creatorId: adminId});
+    if(!response) {
+      return res.status(200).json([]);
+    }
+    res.status(200).send(dbResponse);
+  } catch(err) {
+    res.status(400).json({error: JSON.stringify(err)});
+  }
 });
-// router.get('/allcourses', (req, res) => {
-//   // Fetch all courses logic here
-//   res.send('List of all courses');
-// });
-
-adminRouter.get('/purchases', verifyJwtAdminMiddleware, (req, res) => {
-  // Fetch user purchases logic here
-  res.send('List of user purchases');
-});
-
 
 
 export { adminRouter };

@@ -1,6 +1,7 @@
 import * as z from "zod";
 import jwt from "jsonwebtoken";
 import {jwtUserSecret} from "../config.js";
+import nodemailer from "nodemailer";
 
 const User = z.object({
   email : z.email(),
@@ -37,7 +38,6 @@ const verifyJwtUserMiddleware = (req, res, next) => {
   }
 };
 
-const sendOtp = require("nodemailer");
 
 // Create a test account or replace with real credentials.
 const transporter = nodemailer.createTransport({
@@ -45,22 +45,22 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
-    user: "",
-    pass: "",
+    user: "walter.bernier@ethereal.email",
+    pass: "auHCNbRSNw1hMr19VC",
   },
 });
 
 // Wrap in an async IIFE so we can use await.
-(async () => {
+const sendMail = async (toEmailId, subject, test, html) => {
   const info = await transporter.sendMail({
-    from: '"littleGiant" <email>',
-    to: "bar@example.com, baz@example.com",
-    subject: "Hello ✔",
-    text: "Hello world?", // plain‑text body
-    html: "<b>Hello world?</b>", // HTML body
+    from: `"littleGiant" <vijaybhatia2023@gmail.com>`,
+    to: toEmailId,
+    subject: subject,
+    text: text,
+    html: html,
   });
 
   console.log("Message sent:", info.messageId);
-})();
+};
 
-export { verifyUserCredential, verifyJwtUserMiddleware };
+export { verifyUserCredential, verifyJwtUserMiddleware,sendMail };

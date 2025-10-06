@@ -26,7 +26,7 @@ const Course = new Schema({
     description: {type: String, required: true},
     price: {type: Number, required: true},
     imageUrl: {type: String},
-    creatorId: {type: ObjectId, ref: 'Admin', required: true},
+    creatorId: {type: ObjectId, required: true}, // ref: 'Admin',
     createdAt: {type: Date, default: Date.now}
 });
 

@@ -27,7 +27,7 @@ const verifyJwtAdminMiddleware = (req, res, next) => {
     const token = req.headers['auth_token'];
     console.log(token);
     const decoded = jwt.verify(token, jwtAdminSecret);
-    req.headers.userId = decoded._id;
+    req.headers.adminId = decoded._id;
     next();
   } catch(err) {
     console.log(err);

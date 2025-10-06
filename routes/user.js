@@ -1,17 +1,27 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { userModel } from '../db.js';
+import { courseModel, purchaseModel, userModel } from '../db.js';
 import bcrypt from 'bcrypt';
 import { verifyJwtUserMiddleware, verifyUserCredential } from '../middleware/userMiddleware.js';
 import { jwtUserSecret } from '../config.js';
+import * as z from "zod";
 
 const userRouter = express.Router()
 const saltRounds = 10;
 
+const adminSchema = z.object({
+  email : z.email(),
+  password: z.string().min(4),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1)  
+});
 
 userRouter.post('/signup',verifyUserCredential, async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
+    adminSchema.parse({
+      email, password, firstName, lastName
+    });
     const user = await userModel.findOne({email,});
 
     if (user) {
@@ -77,9 +87,20 @@ userRouter.post('/signin', verifyUserCredential, async (req, res) => {
 //   res.send('List of all courses');
 // });
 
-userRouter.get('/purchases', verifyJwtUserMiddleware, (req, res) => {
-  // Fetch user purchases logic here
-  res.send('List of user purchases');
+userRouter.get('/purchases', verifyJwtUserMiddleware, async (req, res) => {
+  const userId = req.headers.userId;
+
+  const allPurchases = await purchaseModel.findMany({
+    userId: userId
+  });
+
+  const allCourses = [];
+
+  allPurchases.map(async purchase => {  // query need to be optimize
+    const course = await courseModel.findById(courseId);
+    allCourses.push(course)
+  })
+  res.send(allCourses);
 });
 
 
