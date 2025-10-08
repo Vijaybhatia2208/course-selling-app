@@ -82,25 +82,72 @@ userRouter.post('/signin', verifyUserCredential, async (req, res) => {
   }
 });
 
-// router.get('/allcourses', (req, res) => {
-//   // Fetch all courses logic here
-//   res.send('List of all courses');
-// });
-
-userRouter.get('/purchases', verifyJwtUserMiddleware, async (req, res) => {
-  const userId = req.headers.userId;
-
-  const allPurchases = await purchaseModel.findMany({
-    userId: userId
-  });
-
-  const allCourses = [];
-
-  allPurchases.map(async purchase => {  // query need to be optimize
+userRouter.post('/purchaseCourse', async (req, res) => {
+  try {
+    await userModel.updateMany({}, { $set: { purchasedCourses: [] } });
+    const userId = req.headers.userId;
+    const { courseId } = req.body;
+    const user = await userModel.findById(userId);
+  
     const course = await courseModel.findById(courseId);
-    allCourses.push(course)
-  })
-  res.send(allCourses);
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found!"
+      });
+    }
+
+    if(user.purchasedCourses.includes(courseId)) {
+      return res.status(400).json({
+        message: "Course already purchased!"
+      });
+    }
+  
+    await userModel.findByIdAndUpdate(userId, { $addToSet: { purchasedCourses: courseId }});
+    
+    res.send({
+      "message": "Courses purchased successfully !"
+    })
+  } catch(err) {
+    res.status(400).send({
+      "message": err
+    })
+    console.log("Error: ", err);
+  }
+});
+
+userRouter.get('/purchaseCourses', verifyJwtUserMiddleware, async (req, res) => {
+  try {
+    const userId = req.headers.userId;
+
+    const user = await userModel.findById(userId)
+    .populate('purchasedCourses'); 
+    //  Use .populate() to fetch the full Course documents
+    // The 'purchasedCourses' field holds the ObjectIds, and 'Course' is the ref name.
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found!"
+      });
+    }
+
+    // 3. Extract the populated courses from the user document
+    const purchasedCourses = user.purchasedCourses;
+
+    res.status(200).json({
+      message: "Purchased courses retrieved successfully.",
+      purchasedCourses: purchasedCourses
+    });
+
+  } catch(err) {
+    console.error("Error fetching purchased courses: ", err);
+    res.status(500).json({
+      message: "An error occurred while fetching purchased courses."
+    });
+  }
+});
+
+userRouter.use((req, res) => {
+  res.status(404).json({ message: "User Route not found" });
 });
 
 

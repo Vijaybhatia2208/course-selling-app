@@ -148,5 +148,8 @@ adminRouter.get('/course/bulk', verifyJwtAdminMiddleware, async (req, res) => {
   }
 });
 
+adminRouter.use((req, res) => {
+  res.status(404).json({ message: "User Route not found" });
+});
 
 export { adminRouter };

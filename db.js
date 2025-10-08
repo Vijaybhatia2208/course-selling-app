@@ -9,7 +9,8 @@ const User = new Schema({
     password: {type: String, required: true},
     firstName: {type: String, required: true},
     lastName: {type: String, required: true},
-    createdAt: {type: Date, default: Date.now}
+    createdAt: {type: Date, default: Date.now},
+    purchasedCourses: [{type: ObjectId, ref: 'Course'}]
 });
 
 
@@ -26,7 +27,7 @@ const Course = new Schema({
     description: {type: String, required: true},
     price: {type: Number, required: true},
     imageUrl: {type: String},
-    creatorId: {type: ObjectId, required: true}, // ref: 'Admin',
+    creatorId: {type: ObjectId,ref: 'Admin' ,required: true},
     createdAt: {type: Date, default: Date.now}
 });
 
